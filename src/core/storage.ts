@@ -132,3 +132,22 @@ export function gravarLidos(modulo: string, lidos: string[]): void {
     // sem armazenamento: só não lembra
   }
 }
+
+/* Rodada/baralho em andamento: sobrevive a recarregar a página. */
+export function lerAndamento<T>(chave: string): T | null {
+  try {
+    const bruto = localStorage.getItem(`quiz-gabi:andamento:${chave}`)
+    return bruto ? (JSON.parse(bruto) as T) : null
+  } catch {
+    return null
+  }
+}
+
+export function gravarAndamento(chave: string, valor: unknown): void {
+  try {
+    if (valor === null) localStorage.removeItem(`quiz-gabi:andamento:${chave}`)
+    else localStorage.setItem(`quiz-gabi:andamento:${chave}`, JSON.stringify(valor))
+  } catch {
+    // sem storage: só não retoma
+  }
+}

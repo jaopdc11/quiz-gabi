@@ -1,10 +1,10 @@
-import { useLayoutEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { TelaFlashcards } from '@/components/Flashcards'
 import { TelaResumo } from '@/components/Resumo'
 import { Anel, Botao, BotaoLink, Rotulo, SECOES, Selo, Stat } from '@/components/ui'
 import { embaralhar, pontosDoAcerto } from '@/core/pontos'
 import { href, type Modo, useRota } from '@/core/route'
-import { lerProgresso, lerVereditos, registrarPontos, registrarResposta, zerarSecao } from '@/core/storage'
+import { gravarAndamento, lerAndamento, lerProgresso, lerVereditos, registrarPontos, registrarResposta, zerarSecao } from '@/core/storage'
 import type { Modulo, Questao, SecaoId } from '@/core/types'
 import { buscarModulo, modulos } from '@/modulos'
 
@@ -351,8 +351,25 @@ function Jogo(props: { modulo: Modulo; secao: SecaoId; modo: Modo }) {
   return <Rodada key={rodada} {...props} deNovo={() => setRodada((r) => r + 1)} />
 }
 
+interface Salvo {
+  ordem: string[]
+  respostas: { id: string; acertou: boolean }[]
+  pontos: number
+  seq: number
+  maiorSeq: number
+}
+
 function Rodada({ modulo, secao, modo, deNovo }: { modulo: Modulo; secao: SecaoId; modo: Modo; deNovo: () => void }) {
+  const chave = `${modulo.id}:${secao}:${modo}`
+  // retoma a rodada em andamento (recarregar a página não perde nada)
+  const [salvo] = useState(() => {
+    const s = lerAndamento<Salvo>(chave)
+    const porId = new Map(modulo[secao].map((q) => [q.id, q]))
+    if (!s || !s.ordem.every((id) => porId.has(id)) || s.respostas.length >= s.ordem.length) return null
+    return { ...s, fila: s.ordem.map((id) => porId.get(id)!) }
+  })
   const fila = useMemo(() => {
+    if (salvo) return salvo.fila
     let qs = modulo[secao]
     if (modo === 'erros') {
       const erros = new Set(lerProgresso(modulo.id, secao).erros)
@@ -360,15 +377,31 @@ function Rodada({ modulo, secao, modo, deNovo }: { modulo: Modulo; secao: SecaoI
     }
     // a prova real mantém a ordem original; o resto embaralha
     return secao === 'prova' && modo === 'jogar' ? qs : embaralhar(qs)
-  }, [modulo, secao, modo])
+  }, [modulo, secao, modo, salvo])
 
-  const [i, setI] = useState(0)
-  const [pontos, setPontos] = useState(0)
-  const [seq, setSeq] = useState(0)
-  const [maiorSeq, setMaiorSeq] = useState(0)
-  const [respostas, setRespostas] = useState<Resposta[]>([])
+  const [i, setI] = useState(salvo?.respostas.length ?? 0)
+  const [pontos, setPontos] = useState(salvo?.pontos ?? 0)
+  const [seq, setSeq] = useState(salvo?.seq ?? 0)
+  const [maiorSeq, setMaiorSeq] = useState(salvo?.maiorSeq ?? 0)
+  const [respostas, setRespostas] = useState<Resposta[]>(
+    () => salvo?.respostas.map((r, k) => ({ questao: salvo.fila[k]!, acertou: r.acertou })) ?? [],
+  )
   const [ultimoGanho, setUltimoGanho] = useState<number | null>(null)
   const [fim, setFim] = useState<{ recorde: boolean } | null>(null)
+
+  useEffect(() => {
+    if (fim || fila.length === 0) {
+      gravarAndamento(chave, null)
+      return
+    }
+    gravarAndamento(chave, {
+      ordem: fila.map((q) => q.id),
+      respostas: respostas.map((r) => ({ id: r.questao.id, acertou: r.acertou })),
+      pontos,
+      seq,
+      maiorSeq,
+    } satisfies Salvo)
+  }, [chave, fila, respostas, pontos, seq, maiorSeq, fim])
 
   const voltar = href({ nome: 'modulo', modulo: modulo.id })
 

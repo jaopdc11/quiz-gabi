@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { aposVeredito } from '@/core/baralho'
 import { embaralhar } from '@/core/pontos'
 import { href } from '@/core/route'
-import { lerVereditos, registrarCard, zerarCards } from '@/core/storage'
+import { gravarAndamento, lerAndamento, lerVereditos, registrarCard, zerarCards } from '@/core/storage'
 import type { Flashcard, Modulo } from '@/core/types'
 import { Anel, Botao, BotaoLink, Rotulo, Stat } from './ui'
 
@@ -10,11 +10,29 @@ const TODOS = '__todos__'
 
 export function TelaFlashcards({ modulo }: { modulo: Modulo }) {
   const cards = modulo.flashcards ?? []
-  const [sessao, setSessao] = useState<Flashcard[] | null>(null)
+  const chave = `${modulo.id}:cards`
+  // baralho em andamento volta sozinho depois de recarregar
+  const [sessao, setSessao] = useState<Flashcard[] | null>(() => {
+    const s = lerAndamento<SessaoSalva>(chave)
+    if (!s) return null
+    const porId = new Map(cards.map((c) => [c.id, c]))
+    return s.inicial.every((id) => porId.has(id)) && s.fila.every((id) => porId.has(id)) ? s.inicial.map((id) => porId.get(id)!) : null
+  })
   const [, forcar] = useState(0)
   const voltar = href({ nome: 'modulo', modulo: modulo.id })
 
-  if (sessao) return <Sessao modulo={modulo} inicial={sessao} sair={() => setSessao(null)} />
+  if (sessao)
+    return (
+      <Sessao
+        modulo={modulo}
+        inicial={sessao}
+        chave={chave}
+        sair={() => {
+          gravarAndamento(chave, null)
+          setSessao(null)
+        }}
+      />
+    )
 
   const vered = lerVereditos(modulo.id)
   const temas = [...new Set(cards.map((c) => c.tema))]
@@ -101,11 +119,28 @@ export function TelaFlashcards({ modulo }: { modulo: Modulo }) {
   )
 }
 
-function Sessao({ modulo, inicial, sair }: { modulo: Modulo; inicial: Flashcard[]; sair: () => void }) {
-  const [fila, setFila] = useState(inicial)
+interface SessaoSalva {
+  inicial: string[]
+  fila: string[]
+  vistas: number
+  primeiraVez: Record<string, boolean>
+}
+
+function Sessao({ modulo, inicial, chave, sair }: { modulo: Modulo; inicial: Flashcard[]; chave: string; sair: () => void }) {
+  const [salvo] = useState(() => lerAndamento<SessaoSalva>(chave))
+  const [fila, setFila] = useState(() => {
+    if (!salvo) return inicial
+    const porId = new Map(inicial.map((c) => [c.id, c]))
+    return salvo.fila.map((id) => porId.get(id)!).filter(Boolean)
+  })
   const [virado, setVirado] = useState(false)
-  const [vistas, setVistas] = useState(0)
-  const [primeiraVez, setPrimeiraVez] = useState<Record<string, boolean>>({})
+  const [vistas, setVistas] = useState(salvo?.vistas ?? 0)
+  const [primeiraVez, setPrimeiraVez] = useState<Record<string, boolean>>(salvo?.primeiraVez ?? {})
+
+  useEffect(() => {
+    if (fila.length === 0) gravarAndamento(chave, null)
+    else gravarAndamento(chave, { inicial: inicial.map((c) => c.id), fila: fila.map((c) => c.id), vistas, primeiraVez } satisfies SessaoSalva)
+  }, [chave, inicial, fila, vistas, primeiraVez])
   const total = inicial.length
   const resolvidos = total - new Set(fila.map((c) => c.id)).size
 
