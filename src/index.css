@@ -1,0 +1,298 @@
+@import 'tailwindcss';
+
+/*
+ * Sistema visual do Nerd Trainer.
+ *
+ * Direção: terminal noturno. Fundo quase preto azulado, uma malha discreta ao
+ * fundo, tipografia mono para tudo que é número (porque número é o conteúdo do
+ * jogo) e um acento neon usado com parcimônia — ele marca só o que é progresso
+ * e acerto, então quando aparece, significa alguma coisa.
+ *
+ * Cada categoria tem sua cor. Não é decoração: é o que deixa o menu legível de
+ * relance e dá identidade a cada jogo sem precisar de ilustração.
+ */
+@theme {
+  /* superfícies, do mais fundo ao mais alto */
+  --color-fundo: oklch(0.15 0.018 265);
+  --color-fundo-alt: oklch(0.18 0.02 265);
+  --color-superficie: oklch(0.21 0.022 265);
+  --color-superficie-alta: oklch(0.26 0.026 265);
+  --color-borda: oklch(0.31 0.028 265);
+  --color-borda-forte: oklch(0.42 0.035 265);
+
+  /* texto */
+  --color-texto: oklch(0.96 0.008 265);
+  --color-suave: oklch(0.74 0.018 265);
+  --color-tenue: oklch(0.56 0.02 265);
+
+  /* acento e estados */
+  --color-acento: oklch(0.82 0.17 162);
+  --color-acento-forte: oklch(0.88 0.19 162);
+  --color-acento-fundo: oklch(0.32 0.07 162);
+  --color-erro: oklch(0.7 0.19 22);
+  --color-erro-fundo: oklch(0.31 0.09 22);
+  --color-quase: oklch(0.82 0.15 85);
+  --color-quase-fundo: oklch(0.33 0.08 85);
+  /* A ferrugem: laranja-tijolo, longe do vermelho de erro e do âmbar de quase. */
+  --color-ferrugem: oklch(0.66 0.14 45);
+  --color-ferrugem-fundo: oklch(0.3 0.07 45);
+
+  /* uma cor por categoria */
+  --color-mat: oklch(0.78 0.15 235);
+  --color-mat-fundo: oklch(0.3 0.07 235);
+  --color-fis: oklch(0.76 0.16 300);
+  --color-fis-fundo: oklch(0.3 0.08 300);
+  --color-qui: oklch(0.8 0.15 55);
+  --color-qui-fundo: oklch(0.32 0.08 55);
+  /* Verde-folha: é a única família que sobrava entre o laranja da química e o
+     ciano da geografia, e é a cor que biologia tem em qualquer livro. */
+  --color-bio: oklch(0.8 0.15 145);
+  --color-bio-fundo: oklch(0.31 0.08 145);
+  --color-geo: oklch(0.79 0.14 195);
+  --color-geo-fundo: oklch(0.3 0.07 195);
+  --color-hum: oklch(0.78 0.13 15);
+  --color-hum-fundo: oklch(0.3 0.07 15);
+
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-display: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --animate-surgir: surgir 0.35s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  --animate-tremer: tremer 0.3s ease-in-out;
+  --animate-brilho: brilho 0.6s ease-out;
+  --animate-subir-ponto: subir-ponto 0.7s ease-out forwards;
+  --animate-respirar: respirar 2.4s ease-in-out infinite;
+  --animate-pulo: pulo 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-halo: halo 2.2s ease-in-out infinite;
+  --animate-entrar-tela: entrar-tela 0.3s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tremer {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+/* Pulso de luz que percorre a borda quando algo é aceito. */
+@keyframes brilho {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-acento) 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+}
+
+/* O "+1" que sobe e some a cada acerto. */
+@keyframes subir-ponto {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px) scale(1.1);
+  }
+}
+
+@keyframes respirar {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* O número do placar reagindo ao acerto. Curto: acompanha o "+1" que sobe. */
+@keyframes pulo {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.12);
+  }
+}
+
+/*
+ * O brilho do recorde, respirando.
+ *
+ * Bater recorde já pintava o número de verde, e verde parado é só uma cor. O
+ * halo pulsa devagar (2,2 s) de propósito: rápido viraria alarme, e o que se
+ * quer dizer aqui é "isto aqui é seu melhor", não "corra".
+ */
+@keyframes halo {
+  0%,
+  100% {
+    text-shadow: 0 0 28px var(--color-acento);
+  }
+  50% {
+    text-shadow:
+      0 0 46px var(--color-acento),
+      0 0 14px var(--color-acento);
+  }
+}
+
+/* Troca de tela. Menor que o `surgir` das listas: a tela inteira andando 10px
+   parece lerdo, e o que se quer é só dizer que a página é outra. */
+@keyframes entrar-tela {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+:root {
+  color-scheme: dark;
+
+  /*
+   * Altura máxima de um mapa jogável. Precisa sobrar tela para o placar em
+   * cima e para o campo de resposta embaixo — um mapa que ocupa a janela
+   * inteira esconde justamente onde se digita.
+   */
+}
+
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--color-texto);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+
+  /*
+   * Malha de fundo: dois gradientes de luz nos cantos superiores mais uma grade
+   * fina. `fixed` para que ela não role junto e o fundo pareça profundidade, e
+   * não papel de parede.
+   */
+  background-color: var(--color-fundo);
+  background-image:
+    radial-gradient(
+      ellipse 80% 55% at 15% -10%,
+      color-mix(in oklch, var(--color-mat) 14%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 90% -5%,
+      color-mix(in oklch, var(--color-fis) 12%, transparent),
+      transparent
+    ),
+    linear-gradient(var(--color-borda) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-borda) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    100% 100%,
+    56px 56px,
+    56px 56px;
+  background-attachment: fixed;
+}
+
+/* A grade de fundo é estrutura, não conteúdo: fica quase invisível. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: var(--color-fundo);
+  opacity: 0.88;
+  z-index: -1;
+}
+
+/* Sem isso a fita de pi "pula" a cada tecla: a largura do 1 é menor. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.fonte-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Entrada escalonada de listas. O índice vem por style inline. */
+.escalonar > * {
+  animation: surgir 0.35s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+/*
+ * Cascata sem numerar os filhos à mão.
+ *
+ * A `.escalonar` pede um `--i` por item, o que é certo numa lista mapeada e é
+ * burocracia num painel escrito à mão — foi por isso que a tela de fim de
+ * partida nunca teve entrada nenhuma: ninguém ia numerar seis irmãos no JSX. O
+ * `nth-child` resolve isso onde a contagem de filhos é pequena e conhecida.
+ */
+.cascata > * {
+  animation: surgir 0.4s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.cascata > :nth-child(2) {
+  animation-delay: 70ms;
+}
+.cascata > :nth-child(3) {
+  animation-delay: 140ms;
+}
+.cascata > :nth-child(4) {
+  animation-delay: 210ms;
+}
+.cascata > :nth-child(5) {
+  animation-delay: 280ms;
+}
+.cascata > :nth-child(6) {
+  animation-delay: 350ms;
+}
+.cascata > :nth-child(n + 7) {
+  animation-delay: 420ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .escalonar > *,
+  .cascata > * {
+    animation: none;
+  }
+}
+
+/* Foco visível e consistente, sem o anel padrão do navegador. */
+:where(a, button, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-acento);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: var(--color-acento-fundo);
+  color: var(--color-texto);
+}
+
+
+button {
+  font: inherit;
+}
