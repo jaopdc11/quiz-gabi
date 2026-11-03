@@ -69,3 +69,66 @@ export function zerarSecao(modulo: string, secao: SecaoId): void {
   if (t[modulo]) delete t[modulo][secao]
   gravarTudo(t)
 }
+
+/* ── Flashcards: o último veredito de cada cartão ─────────────────────── */
+
+const CHAVE_CARDS = 'quiz-gabi:cards:v1'
+
+type Veredito = 'sabia' | 'nao'
+
+function lerCards(): Record<string, Record<string, Veredito>> {
+  try {
+    const b = localStorage.getItem(CHAVE_CARDS)
+    return b ? JSON.parse(b) : {}
+  } catch {
+    return {}
+  }
+}
+
+export function lerVereditos(modulo: string): Record<string, Veredito> {
+  return lerCards()[modulo] ?? {}
+}
+
+export function registrarCard(modulo: string, card: string, v: Veredito): void {
+  const t = lerCards()
+  t[modulo] = { ...t[modulo], [card]: v }
+  try {
+    localStorage.setItem(CHAVE_CARDS, JSON.stringify(t))
+  } catch {
+    // sem armazenamento: segue sem lembrar
+  }
+}
+
+export function zerarCards(modulo: string): void {
+  const t = lerCards()
+  delete t[modulo]
+  try {
+    localStorage.setItem(CHAVE_CARDS, JSON.stringify(t))
+  } catch {
+    // idem
+  }
+}
+
+/* ── Resumo: tópicos marcados como lidos ──────────────────────────────── */
+
+const CHAVE_LIDOS = 'quiz-gabi:lidos:v1'
+
+export function lerLidos(modulo: string): string[] {
+  try {
+    const b = localStorage.getItem(CHAVE_LIDOS)
+    return (b ? (JSON.parse(b) as Record<string, string[]>) : {})[modulo] ?? []
+  } catch {
+    return []
+  }
+}
+
+export function gravarLidos(modulo: string, lidos: string[]): void {
+  try {
+    const b = localStorage.getItem(CHAVE_LIDOS)
+    const t = b ? (JSON.parse(b) as Record<string, string[]>) : {}
+    t[modulo] = lidos
+    localStorage.setItem(CHAVE_LIDOS, JSON.stringify(t))
+  } catch {
+    // sem armazenamento: só não lembra
+  }
+}

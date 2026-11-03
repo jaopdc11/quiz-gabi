@@ -1,5 +1,5 @@
 import { beforeEach, expect, it } from 'vitest'
-import { lerProgresso, registrarPontos, registrarResposta } from './storage'
+import { lerProgresso, lerVereditos, registrarCard, registrarPontos, registrarResposta } from './storage'
 
 beforeEach(() => localStorage.clear())
 
@@ -19,4 +19,12 @@ it('recorde só sobe', () => {
   expect(registrarPontos('m', 'prova', 50)).toBe(true)
   expect(registrarPontos('m', 'prova', 30)).toBe(false)
   expect(lerProgresso('m', 'prova').recorde).toBe(50)
+})
+
+
+
+it('flashcard guarda o último veredito', () => {
+  registrarCard('m', 'c1', 'nao')
+  registrarCard('m', 'c1', 'sabia')
+  expect(lerVereditos('m')).toEqual({ c1: 'sabia' })
 })

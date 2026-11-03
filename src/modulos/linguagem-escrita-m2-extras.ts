@@ -431,10 +431,10 @@ export const extras: Questao[] = [
     id: 'le-m2-x23',
     enunciado:
       'Na avaliação, um escolar lê bem palavras regulares e pseudopalavras, mas erra palavras irregulares, tendendo a “regularizá-las” (lê como se seguissem a regra letra-som). O perfil é compatível com dislexia:',
-    alternativas: ['Fonológica', 'De superfície', 'Mista', 'Profunda', 'Adquirida por AVC, obrigatoriamente'],
+    alternativas: ['Fonológica (disfonética)', 'Visual (diseidética), também chamada de superfície', 'Mista', 'Profunda', 'Adquirida por AVC, obrigatoriamente'],
     correta: 1,
     explicacao:
-      'A revisão da Psico-USF associa a dislexia de superfície (diseidética) a desempenho abaixo do esperado em palavras irregulares, melhor leitura de regulares e tendência à regularização: a rota lexical falha e a fonológica está preservada. Na fonológica o prejuízo principal é em pseudopalavras; na mista as duas rotas estão comprometidas. Nada no caso indica lesão adquirida.' +
+      'Na nomenclatura de Boder usada pela professora, é a dislexia visual (diseidética), que outros autores chamam de superfície: falha no reconhecimento global da palavra. A revisão da Psico-USF associa a dislexia de superfície (diseidética) a desempenho abaixo do esperado em palavras irregulares, melhor leitura de regulares e tendência à regularização: a rota lexical falha e a fonológica está preservada. Na fonológica o prejuízo principal é em pseudopalavras; na mista as duas rotas estão comprometidas. Nada no caso indica lesão adquirida.' +
       f(SUBTIPOS),
   },
   {
@@ -445,7 +445,7 @@ export const extras: Questao[] = [
       { texto: 'Na dislexia fonológica, a principal marca é a dificuldade na leitura de pseudopalavras e palavras não familiares.', verdadeiro: true },
       { texto: 'Na dislexia fonológica, a rota fonológica está preservada e a lexical está prejudicada.', verdadeiro: false },
       { texto: 'A dislexia mista combina prejuízos das rotas fonológica e lexical.', verdadeiro: true },
-      { texto: 'Dislexia fonológica também é chamada disfonética, e a de superfície, diseidética.', verdadeiro: true },
+      { texto: 'Dislexia fonológica também é chamada disfonética, e a visual (de superfície), diseidética.', verdadeiro: true },
       { texto: 'Os estudos brasileiros revisados usaram sobretudo tarefas de leitura de palavras e pseudopalavras isoladas.', verdadeiro: true },
     ],
     explicacao:

@@ -34,6 +34,18 @@ describe('módulos', () => {
     })
   }
 
+  it('flashcards com id único e conteúdo', () => {
+    for (const m of modulos) {
+      const fs = m.flashcards ?? []
+      expect(new Set(fs.map((f) => f.id)).size).toBe(fs.length)
+      for (const f of fs) {
+        expect(f.frente.trim()).not.toBe('')
+        expect(f.verso.trim()).not.toBe('')
+        expect(f.tema.trim()).not.toBe('')
+      }
+    }
+  })
+
   it('gabarito da M2/2023 bate com a correção da professora', () => {
     const m = modulos.find((x) => x.id === 'linguagem-escrita-m2')!
     const gab = m.prova.map((q) =>

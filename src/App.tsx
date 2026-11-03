@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
+import { TelaFlashcards } from '@/components/Flashcards'
+import { TelaResumo } from '@/components/Resumo'
 import { Anel, Botao, BotaoLink, Rotulo, SECOES, Selo, Stat } from '@/components/ui'
 import { embaralhar, pontosDoAcerto } from '@/core/pontos'
 import { href, type Modo, useRota } from '@/core/route'
-import { lerProgresso, registrarPontos, registrarResposta, zerarSecao } from '@/core/storage'
+import { lerProgresso, lerVereditos, registrarPontos, registrarResposta, zerarSecao } from '@/core/storage'
 import type { Modulo, Questao, SecaoId } from '@/core/types'
 import { buscarModulo, modulos } from '@/modulos'
 
@@ -12,7 +14,13 @@ const SECAO_IDS = ['prova', 'extras'] as const
 
 export function App() {
   const rota = useRota()
-  const chave = rota.nome === 'jogo' ? href(rota) : rota.nome === 'modulo' ? rota.modulo : 'inicio'
+  const chave = href(rota)
+
+  // tela nova começa do topo: sem isso o resumo abria na altura em que a
+  // página do módulo estava rolada
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0)
+  }, [chave])
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6">
@@ -21,7 +29,17 @@ export function App() {
           <Inicio />
         ) : (
           <ComModulo id={rota.modulo}>
-            {(m) => (rota.nome === 'modulo' ? <TelaModulo modulo={m} /> : <Jogo modulo={m} secao={rota.secao} modo={rota.modo} />)}
+            {(m) =>
+              rota.nome === 'modulo' ? (
+                <TelaModulo modulo={m} />
+              ) : rota.nome === 'resumo' ? (
+                <TelaResumo modulo={m} />
+              ) : rota.nome === 'flashcards' ? (
+                <TelaFlashcards modulo={m} />
+              ) : (
+                <Jogo modulo={m} secao={rota.secao} modo={rota.modo} />
+              )
+            }
           </ComModulo>
         )}
       </div>
@@ -246,8 +264,54 @@ function TelaModulo({ modulo }: { modulo: Modulo }) {
             </section>
           )
         })}
+
+        {modulo.flashcards && modulo.flashcards.length > 0 && <CartaoFlashcards modulo={modulo} />}
+        {modulo.resumo && (
+          <a
+            href={href({ nome: 'resumo', modulo: modulo.id })}
+            className="group flex items-center gap-4 rounded-2xl border border-borda bg-superficie p-5 transition-all hover:border-geo/60 motion-safe:active:scale-[0.99]"
+          >
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-geo-fundo text-2xl text-geo">¶</span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-mono text-[11px] tracking-wider text-geo uppercase">leitura</span>
+              <span className="fonte-display block text-xl font-bold">Resumo da matéria</span>
+              <span className="block text-sm text-suave">{modulo.resumo.subtitulo}</span>
+            </span>
+            <span className="text-geo transition-transform group-hover:translate-x-1">→</span>
+          </a>
+        )}
       </div>
     </div>
+  )
+}
+
+function CartaoFlashcards({ modulo }: { modulo: Modulo }) {
+  const cards = modulo.flashcards ?? []
+  const v = lerVereditos(modulo.id)
+  const sabidas = cards.filter((c) => v[c.id] === 'sabia').length
+  const nao = cards.filter((c) => v[c.id] === 'nao').length
+  return (
+    <section className="relative overflow-hidden rounded-2xl border border-borda bg-superficie p-5">
+      <div aria-hidden className="absolute inset-x-0 top-0 h-0.5" style={{ background: 'var(--color-qui)', boxShadow: '0 0 18px var(--color-qui)' }} />
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-qui/40 bg-qui-fundo px-2.5 py-0.5 font-mono text-[11px] tracking-wider text-qui uppercase">
+            <span className="size-1.5 rounded-full bg-current" />
+            flashcards
+          </span>
+          <h2 className="fonte-display mt-2.5 text-2xl font-bold">Baralho de revisão</h2>
+        </div>
+        <span className="fonte-display text-4xl font-bold text-qui tabular opacity-90">{cards.length}</span>
+      </div>
+      <p className="mt-1 text-sm leading-relaxed text-suave">Cartões tirados do resumo: vira, responde de cabeça, marca se sabia.</p>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Stat rotulo="sabia" valor={`${sabidas}/${cards.length}`} cor={sabidas ? 'text-qui' : 'text-texto'} />
+        <Stat rotulo="não sabia" valor={nao} cor={nao ? 'text-erro' : 'text-texto'} />
+      </div>
+      <BotaoLink href={href({ nome: 'flashcards', modulo: modulo.id })} className="mt-4 w-full !bg-qui shadow-[0_0_28px_-6px_var(--color-qui)]">
+        Abrir baralho <span aria-hidden>→</span>
+      </BotaoLink>
+    </section>
   )
 }
 
@@ -406,6 +470,11 @@ function Rodada({ modulo, secao, modo, deNovo }: { modulo: Modulo; secao: SecaoI
       <div key={q.id} className="animate-surgir">
         <div className="mb-3 flex items-center gap-2">
           <Selo secao={secao} />
+          {q.base === 'resumo' && (
+            <span className="rounded-full border border-geo/40 bg-geo-fundo px-2.5 py-0.5 font-mono text-[11px] tracking-wider text-geo uppercase">
+              do resumo
+            </span>
+          )}
           <span className="font-mono text-xs text-tenue">
             {secao === 'prova' ? `Questão ${String(modulo.prova.indexOf(q) + 1).padStart(2, '0')}` : q.tipo === 'vf' ? 'Verdadeiro ou falso' : 'Múltipla escolha'}
           </span>

@@ -21,6 +21,8 @@ export interface QuestaoMultipla {
   /** Índice (0-based) da alternativa correta. */
   correta: number
   explicacao: string
+  /** De onde saiu a questão extra (ex.: 'resumo'); vira um selo na tela. */
+  base?: 'resumo'
 }
 
 /** Verdadeiro ou falso item a item. */
@@ -30,9 +32,28 @@ export interface QuestaoVF {
   enunciado: string
   itens: { texto: string; verdadeiro: boolean }[]
   explicacao: string
+  base?: 'resumo'
 }
 
 export type Questao = QuestaoMultipla | QuestaoVF
+
+/** Cartão de memorização: frente é a pergunta/pista, verso a resposta. */
+export interface Flashcard {
+  id: string
+  /** Agrupa o baralho (ex.: 'Avaliação', 'Zorzi', 'Dislexia'). */
+  tema: string
+  frente: string
+  verso: string
+}
+
+/** Bloco do resumo para leitura. */
+export type BlocoResumo =
+  | { tipo: 'h2'; texto: string }
+  | { tipo: 'h3'; texto: string }
+  | { tipo: 'p'; texto: string }
+  | { tipo: 'item'; texto: string }
+  | { tipo: 'destaque'; texto: string }
+  | { tipo: 'grafico-zorzi' }
 
 export type SecaoId = 'prova' | 'extras'
 
@@ -45,4 +66,7 @@ export interface Modulo {
   prova: Questao[]
   /** Criadas no mesmo estilo e conteúdo, para treino. */
   extras: Questao[]
+  /** Material de leitura (opcional). */
+  resumo?: { titulo: string; subtitulo?: string; blocos: BlocoResumo[] }
+  flashcards?: Flashcard[]
 }
